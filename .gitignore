@@ -3,3 +3,6 @@
 *.dsn
 Nauglamir_hw/.Nauglamir.fsxview
 *.kicad_pcb-bak
+*.ses
+*.xml
+*.csv

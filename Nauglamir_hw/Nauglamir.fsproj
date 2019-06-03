@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--***********************************-->
-<!--   File    : Nauglamir.fsproj      -->
-<!--   Format  : TopoR Project file    -->
-<!--   Version : 2                     -->
-<!--   Program : TopoR Lite 7.0.18578  -->
-<!--   Date    : Sunday, June 02, 2019 -->
-<!--   Time    : 21:20                 -->
-<!--***********************************-->
+<!--*************************************-->
+<!--   File    : Nauglamir.fsproj        -->
+<!--   Format  : TopoR Project file      -->
+<!--   Version : 2                       -->
+<!--   Program : TopoR 8 Layer 7.0.18661 -->
+<!--   Date    : Monday, June 03, 2019   -->
+<!--   Time    : 03:17                   -->
+<!--*************************************-->
 
 <Project>
    <Version current="2"/>
-   <GUID>{006FC63D-D4AF-4A81-B80C-24F9F74F8164}</GUID>
+   <GUID>{1B8E179D-046A-413A-8BF0-7D60C705DF5E}</GUID>
    <Documents>
-      <Section name="PCB" isExpanded="true">
-         <File path=".\Nauglamir.fsx" isopened="1" dateChange="2019-06-02 21:15:27"/>
+      <Section name="PCB" isExpanded="false">
+         <File path=".\Nauglamir.fsx" isopened="1" dateChange="2019-06-03 02:03:22"/>
       </Section>
       <Section name="AutoRouting" isExpanded="false"/>
    </Documents>
