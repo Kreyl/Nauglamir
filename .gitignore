@@ -6,3 +6,5 @@ Nauglamir_hw/.Nauglamir.fsxview
 *.ses
 *.xml
 *.csv
+Nauglamir_fw/.cproject
+Nauglamir_hw/_autosave-Nauglamir.kicad_pcb
