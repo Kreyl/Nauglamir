@@ -12,6 +12,7 @@ static const UartParams_t CmdUartParams(115200, CMD_UART_PARAMS);
 CmdUart_t Uart{&CmdUartParams};
 static void ITask();
 static void OnCmd(Shell_t *PShell);
+#endif
 
 #if 1 // ==== LEDs ====
 #define LED_FREQ_HZ     630
@@ -54,9 +55,39 @@ LedSmoothChunk_t lsqFlicker[LED_CNT][3] = {
 static void StartNextLedSq(int32_t Indx);
 #endif
 
+#if 1 // ==== Acc ====
 Acc_t Acc(&i2c1);
+static void ProcessAcc();
+static TmrKL_t TmrAccRead {TIME_MS2I(11), evtIdAccRead, tktPeriodic};
 
-static TmrKL_t TmrAccRead {TIME_MS2I(90), evtIdAccRead, tktPeriodic};
+// Flickering params
+#define ACC_STEADY_VALUE        1100
+#define BRT_TOP_VALUE           255
+#define BRT_LO_VALUE            22
+#define BRT_TOP_VALUE_x1024     (BRT_TOP_VALUE * 1024)
+#define BRT_LO_VALUE_x1024      (BRT_LO_VALUE * 1024)
+#define BRT_STEP                306
+#define T_TOP_VALUE             900
+#define T_LO_VALUE              207
+uint32_t TMax = T_TOP_VALUE;
+uint32_t TMin = 180;
+uint32_t BrtHi_x1024 = BRT_TOP_VALUE * 1024;    // Max brightness possible, scaled
+// Average
+#define AVERAGE_SZ  90
+class MovingAverage_t {
+private:
+    uint32_t IValue[AVERAGE_SZ];
+    uint32_t Indx = 0;
+public:
+    uint32_t AddAndGetAve(uint32_t AValue) {
+        IValue[Indx] = AValue;
+        if(++Indx >= AVERAGE_SZ) Indx = 0;
+        uint32_t r = 0;
+        for(auto n : IValue) r += n;
+        r /= AVERAGE_SZ;
+        return r;
+    }
+} Avera;
 #endif
 
 int main(void) {
@@ -89,7 +120,7 @@ int main(void) {
     }
 
 
-//    TmrAccRead.StartOrRestart();
+    TmrAccRead.StartOrRestart();
 
     // Main cycle
     ITask();
@@ -100,10 +131,7 @@ void ITask() {
     while(true) {
         EvtMsg_t Msg = EvtQMain.Fetch(TIME_INFINITE);
         switch(Msg.ID) {
-            case evtIdAccRead:
-//                Acc.ReadAccelerations();
-//                Printf("X: %d; Y: %d; Z: %d\r", Acc.Accelerations.xMSB, Acc.Accelerations.yMSB, Acc.Accelerations.zMSB);
-                break;
+            case evtIdAccRead: ProcessAcc(); break;
 
             case evtIdLedDone: StartNextLedSq(Msg.Value); break;
 
@@ -117,19 +145,41 @@ void ITask() {
 } // ITask()
 
 void StartNextLedSq(int32_t Indx) {
-    uint32_t TMax = 900;
-    uint32_t TMin = 270;
-//    uint8_t BrtFadeInMax = 255;
-//    uint8_t BrtFadeInMin = 240;
-//    uint8_t BrtFadeOutMax = 90;
-//    uint8_t BrtFadeOutMin = 27;
     LedSmoothChunk_t *ptr = lsqFlicker[Indx];
     ptr[0].Time_ms    = Random::Generate(TMin, TMax);
-    ptr[0].Brightness = 255; //Random::Generate(BrtFadeInMin, BrtFadeInMax);
+    ptr[0].Brightness = BrtHi_x1024 / 1024; // Scale it down
     ptr[1].Time_ms    = Random::Generate(TMin, TMax);
-    ptr[1].Brightness = 27;//Random::Generate(BrtFadeOutMin, BrtFadeOutMax);
+    ptr[1].Brightness = BRT_LO_VALUE;
     Leds[Indx]->StartOrRestart(ptr);
 //    Printf("%u: t1=%u; b1=%u; t2=%u; b2=%u\r", Indx, ptr[0].Time_ms, ptr[0].Brightness, ptr[1].Time_ms, ptr[1].Brightness);
+}
+
+void ProcessAcc() {
+    Acc.ReadAccelerations();
+//    Printf("X: %d; Y: %d; Z: %d\r", Acc.Accelerations.xMSB, Acc.Accelerations.yMSB, Acc.Accelerations.zMSB);
+    // Calculate acc module
+    uint32_t a = Acc.Accelerations.xMSB * Acc.Accelerations.xMSB +
+            Acc.Accelerations.yMSB * Acc.Accelerations.yMSB +
+            Acc.Accelerations.zMSB * Acc.Accelerations.zMSB;
+    uint32_t e = (a > ACC_STEADY_VALUE)? (a - ACC_STEADY_VALUE) : (ACC_STEADY_VALUE - a);
+    uint32_t Ave = Avera.AddAndGetAve(e);
+
+    // Change top brightness depending on a value
+    if(e > 108)  {
+        if((BrtHi_x1024 + BRT_STEP*30) < BRT_TOP_VALUE_x1024) BrtHi_x1024 += BRT_STEP*30;
+        else BrtHi_x1024 = BRT_TOP_VALUE_x1024;
+    }
+    else { // Idle
+        if((BrtHi_x1024 - BRT_STEP) > BRT_LO_VALUE_x1024) BrtHi_x1024 -= BRT_STEP;
+        else BrtHi_x1024 = BRT_LO_VALUE_x1024;
+    }
+
+    // Change flicker speed depending on a value
+    uint32_t TMaxNew = Proportion<int32_t>(90, 500, T_TOP_VALUE, T_LO_VALUE, (e>500)? 500:e);
+//    Printf("a: %u; ave: %u;  Brt: %u; TMax: %u\r", a, Ave, BrtHi_x1024, TMaxNew);
+//    Printf("a: %u; e: %u;   Brt: %u; TMax: %u\r", a, e, BrtHi_x1024, TMaxNew);
+    Printf("a: %u; e: %u; Ave: %u;   Brt: %u; TMax: %u\r", a, e, Ave, BrtHi_x1024, TMaxNew);
+    TMax = TMaxNew;
 }
 
 #if 1 // ================= Command processing ====================

@@ -15,7 +15,7 @@
 #define ACC_MOTION_TRESHOLD     18      // 1...127. The threshold resolution is 0.063g/LSB.
 
 #define ACC_MOTION_THRESHOLD_TOP    1206
-#define ACC_MOTION_THRESHOLD_BOTTOM 856
+#define ACC_MOTION_THRESHOLD_BOTTOM 900
 
 #define ACC_I2C_ADDR            0x1C
 

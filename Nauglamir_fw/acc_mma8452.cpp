@@ -13,9 +13,7 @@ void Acc_t::Task() {
     ReadAccelerations();
 //    Printf("X: %d; Y: %d; Z: %d\r", Accelerations.xMSB, Accelerations.yMSB, Accelerations.zMSB);
     // Calc total acc
-//    uint32_t a = Accelerations.xMSB * Accelerations.xMSB;
-//    a += Accelerations.yMSB * Accelerations.yMSB;
-//    a += Accelerations.zMSB * Accelerations.zMSB;
+
 //
 //    if ((a >= ACC_MOTION_THRESHOLD_TOP) || (a < ACC_MOTION_THRESHOLD_BOTTOM)) {
 //        EvtQMain.SendNowOrExit(EvtMsg_t(evtIdAcc));
