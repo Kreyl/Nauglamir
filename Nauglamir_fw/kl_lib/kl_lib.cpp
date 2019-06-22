@@ -951,7 +951,7 @@ uint8_t WriteBuf(void *PSrc, uint32_t Sz, uint32_t Addr) {
 };
 #endif
 
-#if 1 // =========================== External IRQ ==============================
+#if 0 // =========================== External IRQ ==============================
 // IRQ handlers
 extern "C" {
 extern void PrintfCNow(const char *format, ...);

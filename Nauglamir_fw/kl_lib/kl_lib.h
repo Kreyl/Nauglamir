@@ -1030,7 +1030,7 @@ public:
 };
 #endif
 
-#if 1 // =========================== External IRQ ==============================
+#if 0 // =========================== External IRQ ==============================
 enum ExtiTrigType_t {ttRising, ttFalling, ttRisingFalling};
 
 /* Make your class descendant of IrqHandler_t:

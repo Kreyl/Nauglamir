@@ -4,6 +4,7 @@
 #include "kl_lib.h"
 #include "MsgQ.h"
 #include "main.h"
+#include "acc_mma8452.h"
 
 #if 1 // ======================== Variables and defines ========================
 // Forever
@@ -13,8 +14,10 @@ CmdUart_t Uart{&CmdUartParams};
 static void ITask();
 static void OnCmd(Shell_t *PShell);
 
+Acc_t Acc(&i2c1);
+
 // ==== Timers ====
-//static TmrKL_t TmrEverySecond {TIME_MS2I(1000), evtIdEverySecond, tktPeriodic};
+static TmrKL_t TmrAccRead {TIME_MS2I(90), evtIdAccRead, tktPeriodic};
 #endif
 
 int main(void) {
@@ -31,8 +34,16 @@ int main(void) {
     Printf("\r%S %S\r", APP_NAME, XSTRINGIFY(BUILD_TIME));
     Clk.PrintFreqs();
 
+    // Power on Acc
+    PinSetupOut(ACC_PWR_PIN, omPushPull);
+    PinSetHi(ACC_PWR_PIN);
+    chThdSleepMilliseconds(18);
+    i2c1.Init();
+//    i2c1.ScanBus();
+    Acc.Init();
+
 //    Led.Init();
-//    TmrEverySecond.StartOrRestart();
+    TmrAccRead.StartOrRestart();
 
     // Main cycle
     ITask();
@@ -43,7 +54,9 @@ void ITask() {
     while(true) {
         EvtMsg_t Msg = EvtQMain.Fetch(TIME_INFINITE);
         switch(Msg.ID) {
-            case evtIdEverySecond:
+            case evtIdAccRead:
+                Acc.ReadAccelerations();
+                Printf("X: %d; Y: %d; Z: %d\r", Acc.Accelerations.xMSB, Acc.Accelerations.yMSB, Acc.Accelerations.zMSB);
                 break;
 
             case evtIdShellCmd:

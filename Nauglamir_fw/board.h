@@ -34,12 +34,17 @@
 #define LED_B_PIN       { GPIOB, 0, TIM3, 3, invInverted, omOpenDrain, 255 }
 #define LED_R_PIN       { GPIOB, 5, TIM3, 2, invInverted, omOpenDrain, 255 }
 
+// Acc mma8452
+#define ACC_IRQ_GPIO    GPIOF
+#define ACC_IRQ_PIN     0
+#define ACC_PWR_PIN     GPIOA, 5
+
 // I2C
 #if I2C1_ENABLED
-#define I2C1_GPIO       GPIOB
-#define I2C1_SCL        6
-#define I2C1_SDA        7
-#define I2C_AF          AF1
+#define I2C1_GPIO       GPIOA
+#define I2C1_SCL        9
+#define I2C1_SDA        10
+#define I2C_AF          AF4
 #endif
 
 #endif // GPIO
@@ -96,7 +101,7 @@
 
 #if 1 // ========================== USART ======================================
 #define PRINTF_FLOAT_EN FALSE
-#define UART_TXBUF_SZ   256
+#define UART_TXBUF_SZ   520
 #define UART_RXBUF_SZ   99
 
 #define UARTS_CNT       1
