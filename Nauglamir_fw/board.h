@@ -26,8 +26,8 @@
 // PortMinTim_t: GPIO, Pin, Tim, TimChnl, invInverted, omPushPull, TopValue
 // UART
 #define UART_GPIO       GPIOA
-#define UART_TX_PIN     9
-#define UART_RX_PIN     10
+#define UART_TX_PIN     2
+#define UART_RX_PIN     3
 
 // LED
 #define LED_G_PIN       { GPIOB, 1, TIM3, 4, invInverted, omOpenDrain, 255 }

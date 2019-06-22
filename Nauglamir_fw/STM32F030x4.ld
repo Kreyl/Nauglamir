@@ -14,6 +14,10 @@
     limitations under the License.
 */
 
+ /* Put it here instead of Makefile */
+__main_stack_size__     = 0x0400; 
+__process_stack_size__  = 0x0400;
+
 /*
  * STM32F030x4 memory setup.
  */
@@ -82,4 +86,4 @@ REGION_ALIAS("BSS_RAM", ram0);
 REGION_ALIAS("HEAP_RAM", ram0);
 
 /* Generic rules inclusion.*/
-INCLUDE rules.ld
+INCLUDE ../rules.ld

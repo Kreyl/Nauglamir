@@ -19,7 +19,6 @@ static void OnCmd(Shell_t *PShell);
 
 int main(void) {
     // ==== Init Vcore & clock system ====
-//    Clk.SetMSI4MHz();
     Clk.UpdateFreqValues();
 
     // === Init OS ===
@@ -29,7 +28,7 @@ int main(void) {
 
     // ==== Init hardware ====
     Uart.Init();
-    Printf("\r%S %S; ID=%u\r", APP_NAME, XSTRINGIFY(BUILD_TIME), ID);
+    Printf("\r%S %S\r", APP_NAME, XSTRINGIFY(BUILD_TIME));
     Clk.PrintFreqs();
 
 //    Led.Init();
