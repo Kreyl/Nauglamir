@@ -1,6 +1,5 @@
 #include "board.h"
 #include "led.h"
-#include "Sequences.h"
 #include "kl_lib.h"
 #include "MsgQ.h"
 #include "main.h"
@@ -14,9 +13,49 @@ CmdUart_t Uart{&CmdUartParams};
 static void ITask();
 static void OnCmd(Shell_t *PShell);
 
+#if 1 // ==== LEDs ====
+#define LED_FREQ_HZ     630
+#define LED_CNT         4
+LedSmooth_t Led1(LED1_PIN, LED_FREQ_HZ);
+LedSmooth_t Led2(LED2_PIN, LED_FREQ_HZ);
+LedSmooth_t Led3(LED3_PIN, LED_FREQ_HZ);
+LedSmooth_t Led4(LED4_PIN, LED_FREQ_HZ);
+LedSmooth_t *Leds[LED_CNT] = {&Led1, &Led2, &Led3, &Led4};;
+
+const LedSmoothChunk_t lsqStart[] = {
+        {csSetup, 270, 153},
+        {csSetup, 270, 20},
+        {csEnd}
+};
+
+LedSmoothChunk_t lsqFlicker[LED_CNT][3] = {
+        { // 0
+            {csSetup, 360, 255},
+            {csSetup, 360, 20},
+            {csEnd},
+        },
+        { // 1
+            {csSetup, 360, 255},
+            {csSetup, 360, 20},
+            {csEnd},
+        },
+        { // 2
+            {csSetup, 360, 255},
+            {csSetup, 360, 20},
+            {csEnd},
+        },
+        { // 3
+            {csSetup, 360, 255},
+            {csSetup, 360, 20},
+            {csEnd},
+        },
+};
+
+static void StartNextLedSq(int32_t Indx);
+#endif
+
 Acc_t Acc(&i2c1);
 
-// ==== Timers ====
 static TmrKL_t TmrAccRead {TIME_MS2I(90), evtIdAccRead, tktPeriodic};
 #endif
 
@@ -42,8 +81,15 @@ int main(void) {
 //    i2c1.ScanBus();
     Acc.Init();
 
-//    Led.Init();
-    TmrAccRead.StartOrRestart();
+    for(int32_t i=0; i<LED_CNT; i++) {
+        Leds[i]->Init();
+        Leds[i]->StartOrRestart(lsqStart);
+        Leds[i]->SetupSeqEndEvt(EvtMsg_t(evtIdLedDone, i));
+        chThdSleepMilliseconds(270);
+    }
+
+
+//    TmrAccRead.StartOrRestart();
 
     // Main cycle
     ITask();
@@ -55,9 +101,11 @@ void ITask() {
         EvtMsg_t Msg = EvtQMain.Fetch(TIME_INFINITE);
         switch(Msg.ID) {
             case evtIdAccRead:
-                Acc.ReadAccelerations();
-                Printf("X: %d; Y: %d; Z: %d\r", Acc.Accelerations.xMSB, Acc.Accelerations.yMSB, Acc.Accelerations.zMSB);
+//                Acc.ReadAccelerations();
+//                Printf("X: %d; Y: %d; Z: %d\r", Acc.Accelerations.xMSB, Acc.Accelerations.yMSB, Acc.Accelerations.zMSB);
                 break;
+
+            case evtIdLedDone: StartNextLedSq(Msg.Value); break;
 
             case evtIdShellCmd:
                 OnCmd((Shell_t*)Msg.Ptr);
@@ -67,6 +115,22 @@ void ITask() {
         } // Switch
     } // while true
 } // ITask()
+
+void StartNextLedSq(int32_t Indx) {
+    uint32_t TMax = 900;
+    uint32_t TMin = 270;
+//    uint8_t BrtFadeInMax = 255;
+//    uint8_t BrtFadeInMin = 240;
+//    uint8_t BrtFadeOutMax = 90;
+//    uint8_t BrtFadeOutMin = 27;
+    LedSmoothChunk_t *ptr = lsqFlicker[Indx];
+    ptr[0].Time_ms    = Random::Generate(TMin, TMax);
+    ptr[0].Brightness = 255; //Random::Generate(BrtFadeInMin, BrtFadeInMax);
+    ptr[1].Time_ms    = Random::Generate(TMin, TMax);
+    ptr[1].Brightness = 27;//Random::Generate(BrtFadeOutMin, BrtFadeOutMax);
+    Leds[Indx]->StartOrRestart(ptr);
+//    Printf("%u: t1=%u; b1=%u; t2=%u; b2=%u\r", Indx, ptr[0].Time_ms, ptr[0].Brightness, ptr[1].Time_ms, ptr[1].Brightness);
+}
 
 #if 1 // ================= Command processing ====================
 void OnCmd(Shell_t *PShell) {

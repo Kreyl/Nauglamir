@@ -49,6 +49,7 @@ private:
     const uint32_t PWMFreq;
     void ISwitchOff() { SetBrightness(0); }
     SequencerLoopTask_t ISetup() {
+//        PrintfI("curr: %u; trg: %u\r", ICurrentBrightness, IPCurrentChunk->Brightness);
         if(ICurrentBrightness != IPCurrentChunk->Brightness) {
             if(IPCurrentChunk->Value == 0) {     // If smooth time is zero,
                 SetBrightness(IPCurrentChunk->Brightness); // set color now,

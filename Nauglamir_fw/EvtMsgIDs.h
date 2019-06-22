@@ -17,5 +17,6 @@ enum EvtMsgId_t {
 
     // Not eternal
     evtIdButtons,
-    evtIdAccRead
+    evtIdAccRead,
+    evtIdLedDone,
 };

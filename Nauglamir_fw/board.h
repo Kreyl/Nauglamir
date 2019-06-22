@@ -29,10 +29,11 @@
 #define UART_TX_PIN     2
 #define UART_RX_PIN     3
 
-// LED
-#define LED_G_PIN       { GPIOB, 1, TIM3, 4, invInverted, omOpenDrain, 255 }
-#define LED_B_PIN       { GPIOB, 0, TIM3, 3, invInverted, omOpenDrain, 255 }
-#define LED_R_PIN       { GPIOB, 5, TIM3, 2, invInverted, omOpenDrain, 255 }
+// LEDs
+#define LED1_PIN        { GPIOA, 4, TIM14, 1, invNotInverted, omPushPull, 255 }
+#define LED2_PIN        { GPIOA, 6, TIM3,  1, invNotInverted, omPushPull, 255 }
+#define LED3_PIN        { GPIOA, 7, TIM3,  2, invNotInverted, omPushPull, 255 }
+#define LED4_PIN        { GPIOB, 1, TIM3,  4, invNotInverted, omPushPull, 255 }
 
 // Acc mma8452
 #define ACC_IRQ_GPIO    GPIOF
@@ -101,7 +102,7 @@
 
 #if 1 // ========================== USART ======================================
 #define PRINTF_FLOAT_EN FALSE
-#define UART_TXBUF_SZ   520
+#define UART_TXBUF_SZ   256
 #define UART_RXBUF_SZ   99
 
 #define UARTS_CNT       1

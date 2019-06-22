@@ -31,7 +31,9 @@ void Acc_t::Init() {
     // Read WhoAmI
     uint8_t v = 0;
     IReadReg(ACC_REG_WHO_AM_I, &v);
-    if(v == 0x2A) Printf("Acc WhoAmI: %X\r", v);
+    if(v == 0x2A) {
+        //Printf("Acc WhoAmI: %X\r", v);
+    }
     else {
         Printf("Acc error: %X\r", v);
         return;
