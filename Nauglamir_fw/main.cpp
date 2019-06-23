@@ -5,7 +5,7 @@
 #include "main.h"
 #include "acc_mma8452.h"
 
-#if 1 // ======================== Variables and defines ========================
+#if 1 // ==== Forever ====
 // Forever
 EvtMsgQ_t<EvtMsg_t, MAIN_EVT_Q_LEN> EvtQMain;
 static const UartParams_t CmdUartParams(115200, CMD_UART_PARAMS);
@@ -61,33 +61,22 @@ static void ProcessAcc();
 static TmrKL_t TmrAccRead {TIME_MS2I(11), evtIdAccRead, tktPeriodic};
 
 // Flickering params
-#define ACC_STEADY_VALUE        1100
-#define BRT_TOP_VALUE           255
-#define BRT_LO_VALUE            22
-#define BRT_TOP_VALUE_x1024     (BRT_TOP_VALUE * 1024)
-#define BRT_LO_VALUE_x1024      (BRT_LO_VALUE * 1024)
-#define BRT_STEP                306
-#define T_TOP_VALUE             900
-#define T_LO_VALUE              207
+#define ACC_STEADY_VALUE        1020    // Module of acceleration: x*x+y*y+z*z
+#define ACC_BRT_THR             126     // Threshold of deviation of acc to change brightness
+#define ACC_TMAX_THR            360     // Threshold of deviation of acc to change speed of flickering
+#define BRT_TOP_VALUE           255     // }
+#define BRT_LO_VALUE            22      // } LED brt is [BRT_LO; BRT_TOP]
+#define BRT_TOP_VALUE_x1024     (BRT_TOP_VALUE * 1024)  // }
+#define BRT_LO_VALUE_x1024      (BRT_LO_VALUE * 1024)   // } To change brightness precisely, scaled value utilized
+#define BRT_STEP_UP             10008   // If needed, increase brightness by BRT_STEP_UP
+#define BRT_STEP_DOWN           207     // If needed, decrease brightness by BRT_STEP_DOWN
+#define T_TOP_VALUE             900     // }
+#define T_LO_VALUE              207     // } TMax is [T_LO_VALUE; T_TOP_VALUE]
+#define T_STEP_UP               2       // If threshold fired, decrease TMax to T_LO_VALUE at once. Othervise, increase it by T_STEP_UP
+
 uint32_t TMax = T_TOP_VALUE;
 uint32_t TMin = 180;
 uint32_t BrtHi_x1024 = BRT_TOP_VALUE * 1024;    // Max brightness possible, scaled
-// Average
-#define AVERAGE_SZ  90
-class MovingAverage_t {
-private:
-    uint32_t IValue[AVERAGE_SZ];
-    uint32_t Indx = 0;
-public:
-    uint32_t AddAndGetAve(uint32_t AValue) {
-        IValue[Indx] = AValue;
-        if(++Indx >= AVERAGE_SZ) Indx = 0;
-        uint32_t r = 0;
-        for(auto n : IValue) r += n;
-        r /= AVERAGE_SZ;
-        return r;
-    }
-} Avera;
 #endif
 
 int main(void) {
@@ -162,24 +151,30 @@ void ProcessAcc() {
             Acc.Accelerations.yMSB * Acc.Accelerations.yMSB +
             Acc.Accelerations.zMSB * Acc.Accelerations.zMSB;
     uint32_t e = (a > ACC_STEADY_VALUE)? (a - ACC_STEADY_VALUE) : (ACC_STEADY_VALUE - a);
-    uint32_t Ave = Avera.AddAndGetAve(e);
 
-    // Change top brightness depending on a value
-    if(e > 108)  {
-        if((BrtHi_x1024 + BRT_STEP*30) < BRT_TOP_VALUE_x1024) BrtHi_x1024 += BRT_STEP*30;
+    // Change params of brightness
+    if(e > ACC_BRT_THR)  {
+        // Increase top brightness
+        if((BrtHi_x1024 + BRT_STEP_UP) < BRT_TOP_VALUE_x1024) BrtHi_x1024 += BRT_STEP_UP;
         else BrtHi_x1024 = BRT_TOP_VALUE_x1024;
     }
     else { // Idle
-        if((BrtHi_x1024 - BRT_STEP) > BRT_LO_VALUE_x1024) BrtHi_x1024 -= BRT_STEP;
+        // Decrease top brightness
+        if(BrtHi_x1024 > (BRT_LO_VALUE_x1024 + BRT_STEP_DOWN)) BrtHi_x1024 -= BRT_STEP_DOWN;
         else BrtHi_x1024 = BRT_LO_VALUE_x1024;
     }
 
-    // Change flicker speed depending on a value
-    uint32_t TMaxNew = Proportion<int32_t>(90, 500, T_TOP_VALUE, T_LO_VALUE, (e>500)? 500:e);
-//    Printf("a: %u; ave: %u;  Brt: %u; TMax: %u\r", a, Ave, BrtHi_x1024, TMaxNew);
-//    Printf("a: %u; e: %u;   Brt: %u; TMax: %u\r", a, e, BrtHi_x1024, TMaxNew);
-    Printf("a: %u; e: %u; Ave: %u;   Brt: %u; TMax: %u\r", a, e, Ave, BrtHi_x1024, TMaxNew);
-    TMax = TMaxNew;
+    // Change params of speed
+    if(e > ACC_TMAX_THR)  {
+        // Decrease TMax
+        TMax = T_LO_VALUE;
+    }
+    else { // Idle
+        // Increase TMax
+        if((TMax + T_STEP_UP) < T_TOP_VALUE) TMax += T_STEP_UP;
+        else TMax = T_TOP_VALUE;
+    }
+//    Printf("a: %u; e: %u;   Brt: %u; TMax: %u\r", a, e, BrtHi_x1024, TMax);
 }
 
 #if 1 // ================= Command processing ====================
